@@ -31,10 +31,16 @@ public class GunController : MonoBehaviour
         equippedGun.transform.localPosition = Vector3.zero;
     }
 
-    
-    
-    
-    
+    public void Shoot()
+    {
+        if (equippedGun != null)
+        {
+            equippedGun.Shoot();
+        }
+    }
+
+
+
 
     // Update is called once per frame
     void Update()
