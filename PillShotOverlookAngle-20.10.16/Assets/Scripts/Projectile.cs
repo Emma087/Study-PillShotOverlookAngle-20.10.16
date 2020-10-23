@@ -5,7 +5,7 @@ using UnityEngine;
 public class Projectile : MonoBehaviour
 {
     private float speed;//设定一个默认的子弹速度
-
+    public LayerMask CollisionMask;
     public void SetSpeed(float newSpeed)
     {
         speed = newSpeed;//这句是为了后续更改子弹速度比较方便
@@ -16,9 +16,27 @@ public class Projectile : MonoBehaviour
     {
     }
 
+    void CheckCollisions(float moveDistance)
+    {
+        Ray ray = new Ray(transform.position,transform.forward);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, moveDistance, CollisionMask, QueryTriggerInteraction.Collide))
+        {
+            OnHitObject(hit);
+        }
+    }
+
+    void OnHitObject(RaycastHit hit)
+    {
+        GameObject.Destroy(gameObject);
+    }
+
     // Update is called once per frame
     void Update()
     {
+        float moveDistance = speed * Time.deltaTime;
+        CheckCollisions(moveDistance);
         transform.Translate(Vector3.forward * Time.deltaTime * speed);
     }
+    
 }
