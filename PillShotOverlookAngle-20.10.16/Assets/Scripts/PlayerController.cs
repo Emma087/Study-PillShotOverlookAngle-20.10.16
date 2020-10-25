@@ -28,7 +28,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // Update is called once per frame
-    public void FixedUpdate()
+    void FixedUpdate()
     {
         myRigidbody.MovePosition(myRigidbody.position + velocity * Time.fixedDeltaTime);
     }

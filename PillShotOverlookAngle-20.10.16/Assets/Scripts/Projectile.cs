@@ -4,11 +4,13 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    private float speed;//设定一个默认的子弹速度
+    private float speed; //设定一个默认的子弹速度
     public LayerMask CollisionMask;
+    private float damage = 1;
+
     public void SetSpeed(float newSpeed)
     {
-        speed = newSpeed;//这句是为了后续更改子弹速度比较方便
+        speed = newSpeed; //这句是为了后续更改子弹速度比较方便
     }
 
     // Start is called before the first frame update
@@ -18,7 +20,7 @@ public class Projectile : MonoBehaviour
 
     void CheckCollisions(float moveDistance)
     {
-        Ray ray = new Ray(transform.position,transform.forward);
+        Ray ray = new Ray(transform.position, transform.forward);
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, moveDistance, CollisionMask, QueryTriggerInteraction.Collide))
         {
@@ -28,6 +30,8 @@ public class Projectile : MonoBehaviour
 
     void OnHitObject(RaycastHit hit)
     {
+        IDamageable damageableObject = hit.collider.GetComponent<IDamageable>();
+        damageableObject.TakeHit(1, hit);
         GameObject.Destroy(gameObject);
     }
 
@@ -38,5 +42,4 @@ public class Projectile : MonoBehaviour
         CheckCollisions(moveDistance);
         transform.Translate(Vector3.forward * Time.deltaTime * speed);
     }
-    
 }

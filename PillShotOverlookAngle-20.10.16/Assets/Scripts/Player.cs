@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerController))]
 [RequireComponent(typeof(GunController))]
 //这句是强制附加另一个脚本 PlayerController，在引擎 inspector 窗口强制添加
-public class Player : MonoBehaviour
+public class Player : LivingEntity
 {
     public float moveSpeed;
     public GameObject aim;
@@ -14,8 +14,10 @@ public class Player : MonoBehaviour
     private GunController gunController;
 
     // Start is called before the first frame update
-    void Start()
+    protected override void Start()
     {
+        Debug.Log(LivingEntity.testSV);
+        base.Start();
         controller = GetComponent<PlayerController>();
         viewCamera = Camera.main;
         gunController = GetComponent<GunController>();
