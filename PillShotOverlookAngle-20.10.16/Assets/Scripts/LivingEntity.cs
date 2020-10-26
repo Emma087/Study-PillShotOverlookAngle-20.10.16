@@ -18,6 +18,11 @@ public class LivingEntity : MonoBehaviour, IDamageable
 
     public void TakeHit(float damage, RaycastHit hit)
     {
+        TakeDamage(damage);
+    }
+
+    public void TakeDamage(float damage)
+    {
         health -= damage;
         if (health <= 0 && !isDead)
         {
@@ -30,10 +35,9 @@ public class LivingEntity : MonoBehaviour, IDamageable
         isDead = true;
         if (OnDeath != null)
         {
-            OnDeath();//触发事件的意思
+            OnDeath(); //触发事件的意思
         }
 
         GameObject.Destroy(gameObject);
     }
 }
-

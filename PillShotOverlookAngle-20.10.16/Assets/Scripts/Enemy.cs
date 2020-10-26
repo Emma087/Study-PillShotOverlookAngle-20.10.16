@@ -21,12 +21,15 @@ public class Enemy : LivingEntity
     private Transform target;
     private float attackDistanceThreshold = .5f; //敌人对主角的攻击限制距离，1.5个unity距离单位
     private float timeBetweenAttacks = 1; //敌人攻击的间隔时间
+    private float damage = 1;//主角一次掉的血量
     private float nextAttackTime; //敌人下一次允许攻击时间
     private float myCollisionRadius; //敌人的半径
     private float targetCollisionRadius;
 
+    private LivingEntity targetEntity; //创建一个主角的实体
     private Material skinMaterial;
     private Color originalColor;
+    private bool hasTarget;
 
     // Start is called before the first frame update
     protected override void Start() // override 覆写父类中的虚方法
@@ -35,27 +38,45 @@ public class Enemy : LivingEntity
         pathfinder = GetComponent<NavMeshAgent>();
         skinMaterial = GetComponent<Renderer>().material; //用组件的 渲染器 调出来 material
         originalColor = skinMaterial.color;
-        currentState = State.Chasing;
-        target = GameObject.FindGameObjectWithTag("Player").transform;
-        myCollisionRadius = GetComponent<CapsuleCollider>().radius;
-        targetCollisionRadius = target.GetComponent<CapsuleCollider>().radius;
-        StartCoroutine(UpdatePath()); //这一句是启动协程的代码，不然协程不奏效
+
+        if (GameObject.FindGameObjectWithTag("Player") != null)
+        {
+            currentState = State.Chasing;
+            hasTarget = true;
+            target = GameObject.FindGameObjectWithTag("Player").transform;
+
+            targetEntity = target.GetComponent<LivingEntity>();
+            targetEntity.OnDeath += OnTargetDeath;
+
+            myCollisionRadius = GetComponent<CapsuleCollider>().radius;
+            targetCollisionRadius = target.GetComponent<CapsuleCollider>().radius;
+            StartCoroutine(UpdatePath()); //这一句是启动协程的代码，不然协程不奏效
+        }
+    }
+
+    void OnTargetDeath()
+    {
+        hasTarget = false;
+        currentState = State.Idle;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Time.time > nextAttackTime)
+        if (hasTarget)
         {
-            float squareDistanceToTarget = (target.position - transform.position).sqrMagnitude;
-            //单纯的去比较两个 Vector3 坐标的距离的话，使用 Vector3.Distance 功能，但非常吃程序，所以换成比较两个变量的平方数，不吃程序，且获得结果一样
-            if (squareDistanceToTarget <
-                Mathf.Pow(attackDistanceThreshold + myCollisionRadius + targetCollisionRadius, 2)
-                ) //Mathf.Pow（要获得平方数的变量，几平方）
-                //这句写成这样，也是没关系的 sqarDistanceToTarget < attackDistanceThreshold * attackDistanceThreshold
+            if (Time.time > nextAttackTime)
             {
-                nextAttackTime = Time.time + timeBetweenAttacks;
-                StartCoroutine(Attack()); //StartCoroutine 启动协程的意思
+                float squareDistanceToTarget = (target.position - transform.position).sqrMagnitude;
+                //单纯的去比较两个 Vector3 坐标的距离的话，使用 Vector3.Distance 功能，但非常吃程序，所以换成比较两个变量的平方数，不吃程序，且获得结果一样
+                if (squareDistanceToTarget <
+                    Mathf.Pow(attackDistanceThreshold + myCollisionRadius + targetCollisionRadius, 2)
+                    ) //Mathf.Pow（要获得平方数的变量，几平方）
+                    //这句写成这样，也是没关系的 sqarDistanceToTarget < attackDistanceThreshold * attackDistanceThreshold
+                {
+                    nextAttackTime = Time.time + timeBetweenAttacks;
+                    StartCoroutine(Attack()); //StartCoroutine 启动协程的意思
+                }
             }
         }
     }
@@ -75,9 +96,16 @@ public class Enemy : LivingEntity
         float percent = 0; //声明一个百分比
 
         skinMaterial.color = Color.yellow;
+        bool hasAppliedDamage = false; //是否已经施加了攻击伤害
 
         while (percent <= 1)
         {
+            if (percent >= .5f && !hasAppliedDamage)
+            {
+                hasAppliedDamage = true;
+                targetEntity.TakeDamage(damage);
+            }
+
             percent += Time.deltaTime * attackSpeed;
             float interpolation = (-Mathf.Pow(percent, 2) + percent) * 4; //这里使用的功能叫做对称函数，这个数学知识后面要查一下
             transform.position = Vector3.Lerp(originalPosition, attackPosition, interpolation);
@@ -92,7 +120,7 @@ public class Enemy : LivingEntity
     IEnumerator UpdatePath() //协程，为了节省程序运算
     {
         float refreshRate = .25f; //refreshRate 刷新率
-        while (target != null)
+        while (hasTarget)
         {
             if (currentState == State.Chasing)
             {
